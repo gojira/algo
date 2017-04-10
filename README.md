@@ -6,14 +6,15 @@
 [![Flattr](https://button.flattr.com/flattr-badge-large.png)](https://flattr.com/submit/auto?fid=kxw60j&url=https%3A%2F%2Fgithub.com%2Ftrailofbits%2Falgo)
 [![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CYZZD39GXUJ3E)
 [![Patreon](https://img.shields.io/badge/back_on-patreon-red.svg)](https://www.patreon.com/algovpn)
+[![Bountysource](https://img.shields.io/bountysource/team/trailofbits/activity.svg)](https://www.bountysource.com/teams/trailofbits)
 
-Algo VPN is a set of Ansible scripts that simplifies the setup of a personal IPSEC VPN. It contains the most secure defaults available, works with common cloud providers, and does not require client software on most devices.
+Algo VPN is a set of Ansible scripts that simplify the setup of a personal IPSEC VPN. It uses the most secure defaults available, works with common cloud providers, and does not require client software on most devices. See our [release announcement](https://blog.trailofbits.com/2016/12/12/meet-algo-the-vpn-that-works/) for more information.
 
 ## Features
 
-* Supports only IKEv2 w/ a single cipher suite: AES-GCM, HMAC-SHA2, and P-256 DH
-* Generates Apple Profiles to auto-configure iOS and macOS devices
-* Provides helper scripts to add and remove users
+* Supports only IKEv2, with a single cipher suite: AES-GCM, HMAC-SHA2, and P-256 DH
+* Generates Apple profiles to auto-configure iOS and macOS devices
+* Includes helper scripts to add and remove users
 * Blocks ads with a local DNS resolver and HTTP proxy (optional)
 * Sets up limited SSH users for tunneling traffic (optional)
 * Based on current versions of Ubuntu and strongSwan
@@ -32,18 +33,18 @@ Algo VPN is a set of Ansible scripts that simplifies the setup of a personal IPS
 
 The easiest way to get an Algo server running is to let it set up a _new_ virtual machine in the cloud for you.
 
-1. **Setup an account on a cloud hosting provider.** Algo supports [DigitalOcean](https://www.digitalocean.com/) (most user friendly), [Amazon EC2](https://aws.amazon.com/), [Google Compute Engine](https://cloud.google.com/compute/), and [Microsoft Azure](https://azure.microsoft.com/).
+1. **Setup an account on a cloud hosting provider.** Algo supports [DigitalOcean](https://m.do.co/c/4d7f4ff9cfe4) (most user friendly), [Amazon EC2](https://aws.amazon.com/), [Google Compute Engine](https://cloud.google.com/compute/), and [Microsoft Azure](https://azure.microsoft.com/).
 
-2. [Download Algo](https://github.com/trailofbits/algo/archive/master.zip) and decompress it in a convenient location on your local machine.
+2. [Download Algo](https://github.com/trailofbits/algo/archive/master.zip) and unzip it in a convenient location on your local machine.
 
-3. Install Algo's core dependencies. Open the Terminal. The `python` interpreter you use to deploy Algo must be python2. If you don't know what this means, you're probably fine. `cd` into the directory where you downloaded Algo, then run:
-    
+3. Install Algo's core dependencies. Open the Terminal. The `python` interpreter you use to deploy Algo must be python2. If you don't know what this means, you're probably fine. `cd` into the `algo-master` directory where you unzipped Algo, then run:
+
     - macOS:
       ```bash
       $ python -m ensurepip --user
       $ python -m pip install --user --upgrade virtualenv
       ```
-    - Linux (deb-based): 
+    - Linux (deb-based):
       ```bash
       $ sudo apt-get update && sudo apt-get install \
           build-essential \
@@ -59,7 +60,7 @@ The easiest way to get an Algo server running is to let it set up a _new_ virtua
 
 4. Install Algo's remaining dependencies for your operating system. Using the same terminal window as the previous step run the command below.
     ```bash
-    $ python -m virtualenv env && source env/bin/activate && python -m pip install -r requirements.txt 
+    $ python -m virtualenv env && source env/bin/activate && python -m pip install -r requirements.txt
     ```
     On macOS, you may be prompted to install `cc` which you should accept.
 
@@ -89,7 +90,7 @@ Advanced users who want to install Algo on top of a server they already own or w
 
 ## Configure the VPN Clients
 
-Certificates and configuration files that users will need are placed in the `configs` directory. Make sure to secure these files since many contain private keys. All files are prefixed with the IP address of your new Algo VPN server.
+Distribute the configuration files to your users, so they can connect to the VPN.  Certificates and configuration files that users will need are placed in the `configs` directory. Make sure to secure these files since many contain private keys. All files are saved under a subdirectory named with the IP address of your new Algo VPN server.
 
 ### Apple Devices
 
@@ -97,33 +98,51 @@ Find the corresponding mobileconfig (Apple Profile) for each user and send it to
 
 ### Android Devices
 
-You need to install the [StrongSwan VPN Client for Android 4 and newer](https://play.google.com/store/apps/details?id=org.strongswan.android) because no version of Android supports IKEv2. Import the corresponding user.p12 certificate to your device. See the [Android setup instructions](/docs/ANDROID.md) for more detailed steps.
+You need to install the [strongSwan VPN Client for Android 4 and newer](https://play.google.com/store/apps/details?id=org.strongswan.android) because no version of Android supports IKEv2. Import the corresponding user.p12 certificate to your device. See the [Android setup instructions](/docs/ANDROID.md) for more detailed steps.
 
 ### Windows
 
-Copy the CA certificate, user certificate, and the user PowerShell script to the client computer. Import the CA certificate to the local machine Trusted Root certificate store. Then, run the included PowerShell script to import the user certificate, set up a VPN connection, and activate stronger ciphers on it.
+Windows clients have a more complicated setup than most others. Follow the steps below to set one up:
+
+1. Copy the CA certificate (`cacert.pem`), user certificate (`$user.p12`), and the user PowerShell script (`windows_$user.ps1`) to the client computer.
+2. Import the CA certificate to the local machine Trusted Root certificate store.
+3. Open PowerShell as Administrator. Navigate to your copied files.
+4. If you haven't already, you will need to change the Execution Policy to allow unsigned scripts to run.
+
+```powershell
+Set-ExecutionPolicy Unrestricted -Scope CurrentUser
+```
+
+5. In the same PowerShell window, run the included PowerShell script to import the user certificate, set up a VPN connection, and activate stronger ciphers on it.
+6. After you execute the user script, set the Execution Policy back before you close the PowerShell window.
+
+```powershell
+Set-ExecutionPolicy Restricted -Scope CurrentUser
+```
+
+Your VPN is now installed and ready to use.
 
 If you want to perform these steps by hand, you will need to import the user certificate to the Personal certificate store, add an IKEv2 connection in the network settings, then activate stronger ciphers on it via the following PowerShell script:
 
-`Set-VpnConnectionIPsecConfiguration -ConnectionName "Algo" -AuthenticationTransformConstants SHA25612
-8 -CipherTransformConstants AES256 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -DHGroup Group14 -PfsGroup none`
+```powershell
+Set-VpnConnectionIPsecConfiguration -ConnectionName "Algo" -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES256 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -DHGroup Group14 -PfsGroup none
+```
 
-### Linux strongSwan Clients (e.g., OpenWRT, Ubuntu, etc.)
+### Linux strongSwan Clients (e.g., OpenWRT, Ubuntu Server, etc.)
 
-Install strongSwan, then copy the included user_ipsec.conf, user_ipsec.secrets, user.crt (user certificate), and user.key (private key) files to your client device. These may require some customization based on your exact use case. These files were originally generated with a point-to-point OpenWRT-based VPN in mind.
+Install strongSwan, then copy the included ipsec_user.conf, ipsec_user.secrets, user.crt (user certificate), and user.key (private key) files to your client device. These will require customization based on your exact use case. These files were originally generated with a point-to-point OpenWRT-based VPN in mind.
 
 ### Other Devices
 
 Depending on the platform, you may need one or multiple of the following files.
 
-* ca.crt: CA Certificate
-* user_ipsec.conf: StrongSwan client configuration
-* user_ipsec.secrets: StrongSwan client configuration
-* user.crt: User Certificate
-* user.key: User Private Key
+* cacert.pem: CA Certificate
 * user.mobileconfig: Apple Profile
 * user.p12: User Certificate and Private Key (in PKCS#12 format)
-* user_windows.ps1: Powershell script to setup a VPN connection on Windows
+* user.sswan: Android strongSwan Profile
+* ipsec_user.conf: strongSwan client configuration
+* ipsec_user.secrets: strongSwan client configuration
+* windows_user.ps1: Powershell script to help setup a VPN connection on Windows
 
 ## Setup an SSH Tunnel
 
@@ -165,3 +184,15 @@ The Algo VPN server now contains only the users listed in the `config.cfg` file.
 > Algo is really easy and secure.
 
 -- [the grugq](https://twitter.com/thegrugq/status/786249040228786176)
+
+> I played around with Algo VPN, a set of scripts that let you set up a VPN in the cloud in very little time, even if you don’t know much about development. I’ve got to say that I was quite impressed with Trail of Bits’ approach.
+
+-- [Romain Dillet](https://twitter.com/romaindillet/status/851037243728965632) for [TechCrunch](https://techcrunch.com/2017/04/09/how-i-made-my-own-vpn-server-in-15-minutes/)
+
+## Support Algo VPN
+
+All donations support continued development. Thanks!
+
+* We accept donations via [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CYZZD39GXUJ3E), [Patreon](https://www.patreon.com/algovpn), and [Flattr](https://flattr.com/submit/auto?fid=kxw60j&url=https%3A%2F%2Fgithub.com%2Ftrailofbits%2Falgo).
+* Use our [referral code](https://m.do.co/c/4d7f4ff9cfe4) when you sign up to Digital Ocean for a $10 credit.
+* We also accept and appreciate contributions of new code and bugfixes via Github Pull Requests.

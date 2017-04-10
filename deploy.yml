@@ -23,7 +23,7 @@
     - { role: local, tags: ['local'] }
 
   post_tasks:
-    - name: Local pre-tasks
+    - name: Local post-tasks
       include: playbooks/post.yml
       become: false
       tags: [ 'cloud' ]
@@ -49,7 +49,6 @@
     - { role: security, tags: [ 'security' ] }
     - { role: proxy, tags: [ 'proxy', 'adblock' ] }
     - { role: dns_adblocking, tags: ['dns', 'adblock' ] }
-    - { role: logging, tags: [ 'logging' ] }
     - { role: ssh_tunneling, tags: [ 'ssh_tunneling' ] }
     - { role: vpn, tags: [ 'vpn' ] }
 

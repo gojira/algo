@@ -1,6 +1,6 @@
 # Advanced Usage
 
-Make sure you have installed all the dependencies necessary for your operating system as described in the README.
+Make sure you have installed all the dependencies necessary for your operating system as described in the [README](../README.md).
 
 ## Local Deployment
 
@@ -15,7 +15,7 @@ git clone https://github.com/trailofbits/algo
 cd algo && ./algo
 ```
 
-**Warning**: If you run Algo on your existing server, the iptables rules will be overwritten. If you don't want to overwite the rules, you must deploy via `ansible-playbook` and skip the `iptables` tag as described below.
+**Warning**: If you run Algo on your existing server, the iptables rules will be overwritten. If you don't want to overwrite the rules, you must deploy via `ansible-playbook` and skip the `iptables` tag as described below.
 
 ## Scripted Deployment
 
@@ -38,7 +38,7 @@ Required tags:
 - cloud
 
 Cloud roles:
- 
+
 - role: cloud-digitalocean, tags: digitalocean
 - role: cloud-ec2, tags: ec2
 - role: cloud-gce, tags: gce
@@ -48,7 +48,6 @@ Server roles:
 - role: vpn, tags: vpn
 - role: dns_adblocking, tags: dns, adblock
 - role: proxy, tags: proxy, adblock
-- role: logging, tags: logging
 - role: security, tags: security
 - role: ssh_tunneling, tags: ssh_tunneling
 
@@ -117,7 +116,6 @@ Possible options for `region`:
 - eu-central-1
 - eu-west-1
 - eu-west-2
-- sa-east-1
 
 Additional tags:
 
