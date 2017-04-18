@@ -2,6 +2,15 @@
 
 set -e
 
+ACTIVATE_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/env/bin/activate"
+if [ -f "$ACTIVATE_SCRIPT" ]
+then
+	source $ACTIVATE_SCRIPT
+else
+	echo "$ACTIVATE_SCRIPT not found.  Did you follow documentation to install dependencies?"
+	exit 1
+fi
+
 SKIP_TAGS="_null encrypted"
 ADDITIONAL_PROMPT="[pasted values will not be displayed]"
 
@@ -46,7 +55,7 @@ security_enabled=${security_enabled:-n}
 if [[ "$security_enabled" =~ ^(y|Y)$ ]]; then ROLES+=" security"; fi
 
 read -p "
-Do you want the VPN to support Windows 10 clients? (requires RSA certificates and key exchange, less secure)
+Do you want the VPN to support Windows 10 or Linux Desktop clients? (enables compatible ciphers and key exchange, less secure)
 [y/N]: " -r Win10_Enabled
 Win10_Enabled=${Win10_Enabled:-n}
 if [[ "$Win10_Enabled" =~ ^(y|Y)$ ]]; then EXTRA_VARS+=" Win10_Enabled=Y"; fi
@@ -67,28 +76,28 @@ deploy () {
 
 azure () {
   read -p "
-Enter your azure secret id (https://github.com/trailofbits/algo/blob/master/docs/AZURE.md)
+Enter your azure secret id (https://github.com/trailofbits/algo/blob/master/docs/cloud-azure.md)
 You can skip this step if you want to use your defaults credentials from ~/.azure/credentials
 $ADDITIONAL_PROMPT
 [...]: " -rs azure_secret
 
   read -p "
 
-Enter your azure tenant id (https://github.com/trailofbits/algo/blob/master/docs/AZURE.md)
+Enter your azure tenant id (https://github.com/trailofbits/algo/blob/master/docs/cloud-azure.md)
 You can skip this step if you want to use your defaults credentials from ~/.azure/credentials
 $ADDITIONAL_PROMPT
 [...]: " -rs azure_tenant
 
   read -p "
 
-Enter your azure client id (application id) (https://github.com/trailofbits/algo/blob/master/docs/AZURE.md)
+Enter your azure client id (application id) (https://github.com/trailofbits/algo/blob/master/docs/cloud-azure.md)
 You can skip this step if you want to use your defaults credentials from ~/.azure/credentials
 $ADDITIONAL_PROMPT
 [...]: " -rs azure_client_id
 
   read -p "
 
-Enter your azure subscription id (https://github.com/trailofbits/algo/blob/master/docs/AZURE.md)
+Enter your azure subscription id (https://github.com/trailofbits/algo/blob/master/docs/cloud-azure.md)
 You can skip this step if you want to use your defaults credentials from ~/.azure/credentials
 $ADDITIONAL_PROMPT
 [...]: " -rs azure_subscription_id
@@ -128,6 +137,8 @@ Name the vpn server:
     24. North Central US
     25. South India
     26. West India
+    27. East US
+    28. East US 2
 
 Enter the number of your desired region:
 [1]: " -r azure_region
@@ -160,6 +171,8 @@ Enter the number of your desired region:
     24) region="northcentralus" ;;
     25) region="southindia" ;;
     26) region="westindia" ;;
+    27) region="eastus" ;;
+    28) region="eastus2" ;;
   esac
 
   ROLES="azure vpn cloud"
@@ -252,10 +265,10 @@ Name the vpn server:
     11.  eu-west-1           EU (Ireland)
     12.  eu-west-2           EU (London)
     13.  ca-central-1        Canada (Central)
+    14.  sa-east-1           São Paulo
 Enter the number of your desired region:
 [1]: " -r aws_region
   aws_region=${aws_region:-1}
-  # sa-east-1 region does not support the size instance we use.
 
   case "$aws_region" in
     1) region="us-east-1" ;;
@@ -271,6 +284,7 @@ Enter the number of your desired region:
     11) region="eu-west-1" ;;
     12) region="eu-west-2";;
     13) region="ca-central-1" ;;
+    14) region="sa-east-1" ;;
   esac
 
   ROLES="ec2 vpn cloud"
@@ -329,13 +343,14 @@ Please choose the number of your zone. Press enter for default (#8) zone.
   esac
 
   ROLES="gce vpn cloud"
-  EXTRA_VARS="credentials_file=$credentials_file server_name=$server_name ssh_public_key=$ssh_public_key zone=$zone max_mss=1348"
+  EXTRA_VARS="credentials_file=$credentials_file server_name=$server_name ssh_public_key=$ssh_public_key zone=$zone max_mss=1316"
 }
 
 non_cloud () {
   read -p "
 Enter the IP address of your server: (or use localhost for local installation)
-: " -r server_ip
+[localhost]: " -r server_ip
+  server_ip=${server_ip:-localhost}
 
   read -p "
 
@@ -343,11 +358,22 @@ What user should we use to login on the server? (note: passwordless login requir
 [root]: " -r server_user
   server_user=${server_user:-root}
 
+if [ "x${server_ip}" = "xlocalhost" ]; then
+	myip=""
+else
+	myip=${server_ip}
+fi
+
   read -p "
 
 Enter the public IP address of your server: (IMPORTANT! This IP is used to verify the certificate)
-[$server_ip]: " -r IP_subject
-  IP_subject=${IP_subject:-$server_ip}
+[$myip]: " -r IP_subject
+  IP_subject=${IP_subject:-$myip}
+
+if [ "x${IP_subject}" = "x" ]; then
+	echo "no server IP given. exiting."
+	exit 1
+fi
 
   ROLES="local vpn"
   EXTRA_VARS="server_ip=$server_ip server_user=$server_user IP_subject_alt_name=$IP_subject"

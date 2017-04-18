@@ -22,7 +22,7 @@
                       <key>SSIDMatch</key>
                       <array>
 {% for network_name in WIFI_EXCLUDE_LIST %}
-                          <string>{{ network_name }}</string>
+                          <string>{{ network_name|e }}</string>
 {% endfor %}
                       </array>
                   </dict>
@@ -60,7 +60,7 @@
                     <key>EncryptionAlgorithm</key>
                     <string>AES-128-GCM</string>
                     <key>IntegrityAlgorithm</key>
-                    <string>SHA2-256</string>
+                    <string>SHA2-512</string>
                     <key>LifeTimeInMinutes</key>
                     <integer>20</integer>
                 </dict>
@@ -81,7 +81,7 @@
                     <key>EncryptionAlgorithm</key>
                     <string>AES-128-GCM</string>
                     <key>IntegrityAlgorithm</key>
-                    <string>SHA2-256</string>
+                    <string>SHA2-512</string>
                     <key>LifeTimeInMinutes</key>
                     <integer>20</integer>
                 </dict>

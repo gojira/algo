@@ -55,18 +55,18 @@ The easiest way to get an Algo server running is to let it set up a _new_ virtua
           python-setuptools \
           python-virtualenv -y
       ```
-     - Linux (rpm-based): See the [Pre-Install Documentation for RedHat/CentOS 6.x](docs/pre-install_redhat_centos_6.x.md)
-     - Windows: See the [Windows documentation](docs/WINDOWS.md)
+     - Linux (rpm-based): See the [Pre-Install Documentation for RedHat/CentOS 6.x](docs/server-redhat-centos6.md)
+     - Windows: See the [Windows documentation](docs/client-windows.md)
 
-4. Install Algo's remaining dependencies for your operating system. Using the same terminal window as the previous step run the command below.
+4. Install Algo's remaining dependencies for your operating system. Use the same terminal window as the previous step and run:
     ```bash
-    $ python -m virtualenv env && source env/bin/activate && python -m pip install -r requirements.txt
+    $ python -m virtualenv env && source env/bin/activate && python -m pip install -U pip && python -m pip install -r requirements.txt
     ```
-    On macOS, you may be prompted to install `cc` which you should accept.
+    On macOS, you may be prompted to install `cc`. You should press accept if so.
 
 5. Open `config.cfg` in your favorite text editor. Specify the users you wish to create in the `users` list.
 
-6. Start the deployment. Return to your terminal. In the Algo directory, run `./algo` and follow the instructions. There are several optional features available. None are required for a fully functional VPN server. These optional features are described in greater detail in [ROLES.md](docs/ROLES.md).
+6. Start the deployment. Return to your terminal. In the Algo directory, run `./algo` and follow the instructions. There are several optional features available. None are required for a fully functional VPN server. These optional features are described in greater detail in [ansible-roles.md](docs/ansible-roles.md).
 
 That's it! You will get the message below when the server deployment process completes. You now have an Algo server on the internet. Take note of the p12 (user certificate) password in case you need it later.
 
@@ -86,7 +86,7 @@ You can now setup clients to connect it, e.g. your iPhone or laptop. Proceed to 
 
 Note: If you want to run Algo again at any point in the future, you must first "reactivate" the dependencies for it. To reactivate them, open your terminal, use `cd` to navigate to the directory with Algo, then run `source env/bin/activate`.
 
-Advanced users who want to install Algo on top of a server they already own or want to script the deployment of Algo onto a network of servers, please see the [Advanced Usage](/docs/ADVANCED.md) documentation.
+Advanced users who want to install Algo on top of a server they already own or want to script the deployment of Algo onto a network of servers, please see the [Advanced Usage](/docs/advanced-usage.md) documentation.
 
 ## Configure the VPN Clients
 
@@ -98,7 +98,7 @@ Find the corresponding mobileconfig (Apple Profile) for each user and send it to
 
 ### Android Devices
 
-You need to install the [strongSwan VPN Client for Android 4 and newer](https://play.google.com/store/apps/details?id=org.strongswan.android) because no version of Android supports IKEv2. Import the corresponding user.p12 certificate to your device. See the [Android setup instructions](/docs/ANDROID.md) for more detailed steps.
+You need to install the [strongSwan VPN Client for Android 4 and newer](https://play.google.com/store/apps/details?id=org.strongswan.android) because no version of Android supports IKEv2. Import the corresponding user.p12 certificate to your device. See the [Android setup instructions](/docs/client-android.md) for more detailed steps.
 
 ### Windows
 
@@ -128,9 +128,34 @@ If you want to perform these steps by hand, you will need to import the user cer
 Set-VpnConnectionIPsecConfiguration -ConnectionName "Algo" -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES256 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -DHGroup Group14 -PfsGroup none
 ```
 
+### Linux Network Manager Clients (e.g., Ubuntu, Debian, or Fedora Desktop)
+
+Network Manager does not support AES-GCM. In order to support Linux Desktop clients, please choose the "compatible" cryptography and use at least Network Manager 1.4.1. See [Issue #263](https://github.com/trailofbits/algo/issues/263) for more information.
+
 ### Linux strongSwan Clients (e.g., OpenWRT, Ubuntu Server, etc.)
 
 Install strongSwan, then copy the included ipsec_user.conf, ipsec_user.secrets, user.crt (user certificate), and user.key (private key) files to your client device. These will require customization based on your exact use case. These files were originally generated with a point-to-point OpenWRT-based VPN in mind.
+
+#### Ubuntu Server 16.04 example
+
+1. `sudo apt-get install strongswan strongswan-plugin-openssl`: install strongSwan
+2. `/etc/ipsec.d/certs`: copy `user.crt` from `algo-master/configs/<name>/pki/certs`
+3. `/etc/ipsec.d/private`: copy `user.key` from `algo-master/configs/<name>/pki/private`
+4. `/etc/ipsec.d/cacerts`: copy `cacert.pem` from `algo-master/configs/<name>/cacert.pem`
+5. `/etc/ipsec.secrets`: add your `user.key` to the list, e.g. `xx.xxx.xx.xxx : ECDSA user.key`
+6. `/etc/ipsec.conf`: add the connection from `ipsec_user.conf` and update `leftcert` to match the `user.crt` filename
+7. `sudo ipsec restart`: pick up config changes
+8. `sudo ipsec up <conn-name>`: start the ipsec tunnel
+9. `sudo ipsec down <conn-name>`: shutdown the ipsec tunnel
+
+One common use case is to let your server access your local LAN without going through the VPN. Set up a passthrough connection by adding the following to `/etc/ipsec.conf`. Replace `192.168.1.1/24` with the subnet your LAN uses:
+
+    conn lan-passthrough
+    leftsubnet=192.168.1.1/24
+    rightsubnet=192.168.1.1/24
+    authby=never # No authentication necessary
+    type=pass # passthrough
+    auto=route # no need to ipsec up lan-passthrough
 
 ### Other Devices
 
@@ -164,10 +189,10 @@ The Algo VPN server now contains only the users listed in the `config.cfg` file.
 
 ## Additional Documentation
 
-* [Advanced Usage](docs/ADVANCED.md) describes how to deploy an Algo VPN server directly from Ansible.
-* [FAQ](docs/FAQ.md) includes answers to common questions.
-* [Roles](docs/ROLES.md) includes a description of optional Algo VPN server features.
-* [Troubleshooting](docs/TROUBLESHOOTING.md) includes answers to common technical issues.
+* [Advanced Usage](docs/advanced-usage.md) describes how to deploy an Algo VPN server directly from Ansible.
+* [FAQ](docs/faq.md) includes answers to common questions.
+* [Roles](docs/ansible-roles.md) includes a description of optional Algo VPN server features.
+* [Troubleshooting](docs/troubleshooting.md) includes answers to common technical issues.
 
 ## Endorsements
 
@@ -188,6 +213,10 @@ The Algo VPN server now contains only the users listed in the `config.cfg` file.
 > I played around with Algo VPN, a set of scripts that let you set up a VPN in the cloud in very little time, even if you don’t know much about development. I’ve got to say that I was quite impressed with Trail of Bits’ approach.
 
 -- [Romain Dillet](https://twitter.com/romaindillet/status/851037243728965632) for [TechCrunch](https://techcrunch.com/2017/04/09/how-i-made-my-own-vpn-server-in-15-minutes/)
+
+> If you’re uncomfortable shelling out the cash to an anonymous, random VPN provider, this is the best solution.
+
+-- [Thorin Klosowski](https://twitter.com/kingthor) for [Lifehacker](http://lifehacker.com/how-to-set-up-your-own-completely-free-vpn-in-the-cloud-1794302432)
 
 ## Support Algo VPN
 
