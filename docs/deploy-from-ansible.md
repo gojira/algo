@@ -1,23 +1,6 @@
-# Advanced Usage
+# Scripted Deployment
 
-Make sure you have installed all the dependencies necessary for your operating system as described in the [README](../README.md).
-
-## Local deployment
-
-It is possible to download the Algo scripts to your own Ubuntu server and run the scripts locally. You need to install Ansible to run Algo on Ubuntu. Installing ansible via pip requires pulling in a lot of dependencies, including a full compiler suite. It would be easier to use apt, however, Ubuntu 16.04 only comes with Ansible 2.0.0.2. Therefore, to use apt you must use the ansible PPA, and using a PPA requires installing `software-properties-common`.
-
-tl;dr:
-
-```shell
-sudo apt-get install software-properties-common && sudo apt-add-repository ppa:ansible/ansible
-sudo apt-get update && sudo apt-get install ansible
-git clone https://github.com/trailofbits/algo
-cd algo && ./algo
-```
-
-**Warning**: If you run Algo on your existing server, the iptables rules will be overwritten. If you don't want to overwrite the rules, you must deploy via `ansible-playbook` and skip the `iptables` tag as described below.
-
-## Scripted deployment
+Before you begin, make sure you have installed all the dependencies necessary for your operating system as described in the [README](../README.md).
 
 You can deploy Algo non-interactively by running the Ansible playbooks directly with `ansible-playbook`.
 
@@ -47,7 +30,6 @@ Server roles:
 
 - role: vpn, tags: vpn
 - role: dns_adblocking, tags: dns, adblock
-- role: proxy, tags: proxy, adblock
 - role: security, tags: security
 - role: ssh_tunneling, tags: ssh_tunneling
 
@@ -120,6 +102,70 @@ Possible options for `region`:
 Additional tags:
 
 - [encrypted](https://aws.amazon.com/blogs/aws/new-encrypted-ebs-boot-volumes/) (enabled by default)
+
+#### Minimum required IAM permissions for deployment:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PreDeployment",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeImages",
+                "ec2:DescribeKeyPairs",
+                "ec2:ImportKeyPair"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Sid": "DeployCloudFormationStack",
+            "Effect": "Allow",
+            "Action": [
+                "cloudformation:CreateStack",
+                "cloudformation:DescribeStacks",
+                "cloudformation:CreateStacks",
+                "cloudformation:DescribeStackEvents",
+                "cloudformation:ListStackResources"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Sid": "CloudFormationEC2Access",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateInternetGateway",
+                "ec2:DescribeVpcs",
+                "ec2:CreateVpc",
+                "ec2:DescribeInternetGateways",
+                "ec2:ModifyVpcAttribute",
+                "ec2:createTags",
+                "ec2:CreateSubnet",
+                "ec2:Associate*",
+                "ec2:CreateRouteTable",
+                "ec2:AttachInternetGateway",
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeSubnets",
+                "ec2:ModifySubnetAttribute",
+                "ec2:CreateRoute",
+                "ec2:CreateSecurityGroup",
+                "ec2:DescribeSecurityGroups",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:RunInstances",
+                "ec2:DescribeInstances"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
+```
 
 ### Google Compute Engine
 

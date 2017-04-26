@@ -1,11 +1,15 @@
 config setup
-    uniqueids = never # allow multiple connections per user
+    uniqueids=never # allow multiple connections per user
     charondebug="ike 2, knl 2, cfg 2, net 2, esp 2, dmn 2,  mgr 2"
 
 conn %default
     fragmentation=yes
     rekey=no
+{% if strongswan_version.stdout is defined and strongswan_version.stdout > '550' %}
     dpdaction=clear
+{% else %}
+    dpdaction=none
+{% endif %}
     keyexchange=ikev2
     compress=yes
     dpddelay=35s

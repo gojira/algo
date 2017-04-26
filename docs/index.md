@@ -1,15 +1,19 @@
 # Algo VPN documentation
 
-* [Advanced usage](advanced-usage.md)
-* [Ansible roles](ansible-roles.md)
+* Setup instructions
+  - Documentation for available [Ansible roles](setup-roles.md)
+  - Deploy from [RedHat/CentOS 6.x](deploy-from-redhat-centos6.md)
+  - Deploy from [Windows](deploy-from-windows.md)
+  - Deploy from [Ansible](deploy-from-ansible.md) directly
 * Client setup
-  - [Windows](client-windows.md)
-  - [Android](client-android.md)
-  - [Generic/Linux](client-generic.md)
+  - Setup [Android](client-android.md) clients
+  - Setup [Generic/Linux](client-linux.md) clients with Ansible
 * Cloud setup
-  - [Azure](cloud-azure.md)
-* Server setup
-  - [RedHat/CentOS 6.x](server-redhat-centos6.md)
-  - [FreeBSD](server-freebsd.md)
-* [Troubleshooting](troubleshooting.md)
+  - Configure [Azure](cloud-azure.md)
+* Advanced Deployment
+  - Deploy to your own [FreeBSD](deploy-to-freebsd.md) server
+  - Deploy to your own [Ubuntu 16.04](deploy-to-ubuntu.md) server
+  - Deploy to an [unsupported cloud provider](deploy-to-unsupported-cloud.md)
 * [FAQ](faq.md)
+* [Troubleshooting](troubleshooting.md)
+

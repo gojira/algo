@@ -1,5 +1,4 @@
-- name: Gather Facts
-  setup:
+---
 
 - name: Dnsmasq installed
   package: name=dnsmasq
@@ -15,8 +14,6 @@
 
 - include: freebsd.yml
   when: ansible_distribution == 'FreeBSD'
-
-- meta: flush_handlers
 
 - name: Dnsmasq configured
   template: src=dnsmasq.conf.j2 dest="{{ config_prefix|default('/') }}etc/dnsmasq.conf"
@@ -37,6 +34,8 @@
 - name: Update adblock hosts
   shell: >
     sudo -u dnsmasq "/usr/local/sbin/adblock.sh"
+
+- meta: flush_handlers
 
 - name: Dnsmasq enabled and started
   service: name=dnsmasq state=started enabled=yes
