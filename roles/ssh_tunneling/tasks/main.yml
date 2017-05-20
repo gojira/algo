@@ -18,7 +18,12 @@
       group: name=algo state=present
 
     - name: Ensure that the jail directory exist
-      file: path=/var/jail/ state=directory mode=0755 owner=root group="{{ root_group|default('root') }}"
+      file:
+        path: /var/jail/
+        state: directory
+        mode: 0755
+        owner: root
+        group: "{{ root_group|default('root') }}"
 
     - name: Ensure that the SSH users exist
       user:
@@ -46,12 +51,14 @@
       with_items: "{{ users }}"
 
     - name: Generate SSH fingerprints
-      shell: >
-        ssh-keyscan {{ IP_subject_alt_name }} 2>/dev/null
+      shell: ssh-keyscan {{ IP_subject_alt_name }} 2>/dev/null
       register: ssh_fingerprints
 
     - name: Fetch users SSH private keys
-      fetch: src='/var/jail/{{ item }}/.ssh/id_ecdsa' dest=configs/{{ IP_subject_alt_name }}/{{ item }}.ssh.pem flat=yes
+      fetch:
+        src: '/var/jail/{{ item }}/.ssh/id_ecdsa'
+        dest: configs/{{ IP_subject_alt_name }}/{{ item }}.ssh.pem
+        flat: yes
       with_items: "{{ users }}"
 
     - name: Change mode for SSH private keys
@@ -75,6 +82,21 @@
       become: no
       with_items:
         - "{{ users }}"
+        
+    - name: SSH | Get active system users
+      shell: >
+        getent group algo | cut -f4 -d: | sed "s/,/\n/g"
+      register: valid_users
+      when: ssh_tunneling_enabled is defined and ssh_tunneling_enabled == "y"
+
+    - name: SSH | Delete non-existing users
+      user:
+        name: "{{ item }}"
+        state: absent
+        remove: yes
+        force: yes
+      when: item not in users and ssh_tunneling_enabled is defined and ssh_tunneling_enabled == "y"
+      with_items: "{{ valid_users.stdout_lines | default('null') }}"
   rescue:
     - debug: var=fail_hint
       tags: always
