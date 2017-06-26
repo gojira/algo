@@ -51,6 +51,12 @@ Required variables:
 - server_user
 - IP_subject_alt_name
 
+Note that by default, the iptables rules on your existing server will be overwritten. If you don't want to overwrite the iptables rules, you can use the `--skip-tags iptables` flag, for example:
+
+```shell
+ansible-playbook deploy.yml -t local,vpn --skip-tags iptables -e 'server_ip=172.217.2.238 server_user=algo IP_subject_alt_name=172.217.2.238'
+```
+
 ### Digital Ocean
 
 Required variables:
@@ -126,8 +132,8 @@ Additional tags:
             "Effect": "Allow",
             "Action": [
                 "cloudformation:CreateStack",
+                "cloudformation:UpdateStack",
                 "cloudformation:DescribeStacks",
-                "cloudformation:CreateStacks",
                 "cloudformation:DescribeStackEvents",
                 "cloudformation:ListStackResources"
             ],
@@ -180,16 +186,27 @@ Required variables:
 
 Possible options for `zone`:
 
+- us-west1-a
+- us-west1-b
+- us-west1-c
 - us-central1-a
 - us-central1-b
 - us-central1-c
 - us-central1-f
+- us-east4-a
+- us-east4-b
+- us-east4-c
 - us-east1-b
 - us-east1-c
 - us-east1-d
 - europe-west1-b
 - europe-west1-c
 - europe-west1-d
+- asia-southeast1-a
+- asia-southeast1-b
 - asia-east1-a
 - asia-east1-b
 - asia-east1-c
+- asia-northeast1-a
+- asia-northeast1-b
+- asia-northeast1-c
