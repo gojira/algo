@@ -2,13 +2,16 @@
 
 set -e
 
-ACTIVATE_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/env/bin/activate"
-if [ -f "$ACTIVATE_SCRIPT" ]
+if [ -z ${VIRTUAL_ENV+x} ]
 then
-	source $ACTIVATE_SCRIPT
-else
-	echo "$ACTIVATE_SCRIPT not found.  Did you follow documentation to install dependencies?"
-	exit 1
+	ACTIVATE_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/env/bin/activate"
+	if [ -f "$ACTIVATE_SCRIPT" ]
+	then
+		source $ACTIVATE_SCRIPT
+	else
+		echo "$ACTIVATE_SCRIPT not found.  Did you follow documentation to install dependencies?"
+		exit 1
+	fi
 fi
 
 SKIP_TAGS="_null encrypted"
@@ -40,7 +43,7 @@ read -p "
 Do you want to install a DNS resolver on this VPN server, to block ads while surfing?
 [y/N]: " -r dns_enabled
 dns_enabled=${dns_enabled:-n}
-if [[ "$dns_enabled" =~ ^(y|Y)$ ]]; then ROLES+=" dns"; fi
+if [[ "$dns_enabled" =~ ^(y|Y)$ ]]; then ROLES+=" dns"; EXTRA_VARS+=" local_dns=true"; fi
 
 read -p "
 Do you want each user to have their own account for SSH tunneling?
@@ -105,68 +108,76 @@ Name the vpn server:
   read -p "
 
   What region should the server be located in? (https://azure.microsoft.com/en-us/regions/)
-    1.  South Central US
-    2.  Central US
-    3.  North Europe
-    4.  West Europe
-    5.  Southeast Asia
-    6.  Japan West
-    7.  Japan East
-    8.  Australia Southeast
-    9.  Australia East
-    10. Canada Central
-    11. West US 2
-    12. West Central US
-    13. UK South
-    14. UK West
-    15. West US
-    16. Brazil South
-    17. Canada East
-    18. Central India
-    19. East Asia
-    20. Germany Central
-    21. Germany Northeast
-    22. Korea Central
-    23. Korea South
-    24. North Central US
-    25. South India
-    26. West India
-    27. East US
-    28. East US 2
+    1.  East US              (Virginia)
+    2.  East US 2            (Virginia)
+    3.  Central US           (Iowa)
+    4.  North Central US     (Illinois)
+    5.  South Central US     (Texas)
+    6.  West Central US      (Wyoming)
+    7.  West US              (California)
+    8.  West US 2            (Washington)
+    9.  Canada East          (Quebec City)
+    10. Canada Central       (Toronto)
+    11. Brazil South         (Sao Paulo State)
+    12. North Europe         (Ireland)
+    13. West Europe          (Netherlands)
+    14. France Central       (Paris)
+    15. France South         (Marseille)
+    16. UK West              (Cardiff)
+    17. UK South             (London)
+    18. Germany Central      (Frankfurt)
+    19. Germany Northeast    (Magdeburg)
+    20. Southeast Asia       (Singapore)
+    21. East Asia            (Hong Kong)
+    22. Australia East       (New South Wales)
+    23. Australia Southeast  (Victoria)
+    24. Australia Central    (Canberra)
+    25. Australia Central 2  (Canberra)
+    26. Central India        (Pune)
+    27. West India           (Mumbai)
+    28. South India          (Chennai)
+    29. Japan East           (Tokyo, Saitama)
+    30. Japan West           (Osaka)
+    31. Korea Central        (Seoul)
+    32. Korea South          (Busan)
 
 Enter the number of your desired region:
 [1]: " -r azure_region
   azure_region=${azure_region:-1}
 
   case "$azure_region" in
-    1) region="southcentralus" ;;
-    2) region="centralus" ;;
-    3) region="northeurope" ;;
-    4) region="westeurope" ;;
-    5) region="southeastasia" ;;
-    6) region="japanwest" ;;
-    7) region="japaneast" ;;
-    8) region="australiasoutheast" ;;
-    9) region="australiaeast" ;;
+    1) region="eastus" ;;
+    2) region="eastus2" ;;
+    3) region="centralus" ;;
+    4) region="northcentralus" ;;
+    5) region="southcentralus" ;;
+    6) region="westcentralus" ;;
+    7) region="westus" ;;
+    8) region="westus2" ;;
+    9) region="canadaeast" ;;
     10) region="canadacentral" ;;
-    11) region="westus2" ;;
-    12) region="westcentralus" ;;
-    13) region="uksouth" ;;
-    14) region="ukwest" ;;
-    15) region="westus" ;;
-    16) region="brazilsouth" ;;
-    17) region="canadaeast" ;;
-    18) region="centralindia" ;;
-    19) region="eastasia" ;;
-    20) region="germanycentral" ;;
-    21) region="germanynortheast" ;;
-    22) region="koreacentral" ;;
-    23) region="koreasouth" ;;
-    24) region="northcentralus" ;;
-    25) region="southindia" ;;
-    26) region="westindia" ;;
-    27) region="eastus" ;;
-    28) region="eastus2" ;;
+    11) region="brazilsouth" ;;
+    12) region="northeurope" ;;
+    13) region="westeurope"  ;;
+    14) region="francecentral"  ;;
+    15) region="francesouth"  ;;
+    16) region="ukwest"  ;;
+    17) region="uksouth" ;;
+    18) region="germanycentral"  ;;
+    19) region="germanynortheast"  ;;
+    20) region="southeastasia"  ;;
+    21) region="eastasia"  ;;
+    22) region="australiaeast"  ;;
+    23) region="australiasoutheast"  ;;
+    24) region="australiacentral"  ;;
+    25) region="australiacentral2"  ;;
+    26) region="centralindia"  ;;
+    27) region="westindia"  ;;
+    28) region="southindia"  ;;
+    29) region="japaneast"  ;;
+    30) region="japanwest"  ;;
+    31) region="koreacentral"  ;;
+    32) region="koreasouth"  ;;
   esac
 
   ROLES="azure vpn cloud"
@@ -200,6 +211,7 @@ Name the vpn server:
     10. Singapore
     11. Toronto
     12. Bangalore
+
 Enter the number of your desired region:
 [7]: " -r region
   region=${region:-7}
@@ -249,16 +261,19 @@ Name the vpn server:
     2.   us-east-2           US East (Ohio)
     3.   us-west-1           US West (N. California)
     4.   us-west-2           US West (Oregon)
-    5.   ap-south-1          Asia Pacific (Mumbai)
-    6.   ap-northeast-2      Asia Pacific (Seoul)
-    7.   ap-southeast-1      Asia Pacific (Singapore)
-    8.   ap-southeast-2      Asia Pacific (Sydney)
-    9.   ap-northeast-1      Asia Pacific (Tokyo)
-    10.  eu-central-1        EU (Frankfurt)
-    11.  eu-west-1           EU (Ireland)
-    12.  eu-west-2           EU (London)
-    13.  ca-central-1        Canada (Central)
-    14.  sa-east-1           São Paulo
+    5.   ca-central-1        Canada (Central)
+    6.   eu-central-1        EU (Frankfurt)
+    7.   eu-west-1           EU (Ireland)
+    8.   eu-west-2           EU (London)
+    9.   eu-west-3           EU (Paris)
+    10.  ap-northeast-1      Asia Pacific (Tokyo)
+    11.  ap-northeast-2      Asia Pacific (Seoul)
+    12.  ap-northeast-3      Asia Pacific (Osaka-Local)
+    13.  ap-southeast-1      Asia Pacific (Singapore)
+    14.  ap-southeast-2      Asia Pacific (Sydney)
+    15.  ap-south-1          Asia Pacific (Mumbai)
+    16.  sa-east-1           South America (São Paulo)
+
 Enter the number of your desired region:
 [1]: " -r aws_region
   aws_region=${aws_region:-1}
@@ -268,20 +283,22 @@ Enter the number of your desired region:
     2) region="us-east-2" ;;
     3) region="us-west-1" ;;
     4) region="us-west-2" ;;
-    5) region="ap-south-1" ;;
-    6) region="ap-northeast-2" ;;
-    7) region="ap-southeast-1" ;;
-    8) region="ap-southeast-2" ;;
-    9) region="ap-northeast-1" ;;
-    10) region="eu-central-1" ;;
-    11) region="eu-west-1" ;;
-    12) region="eu-west-2";;
-    13) region="ca-central-1" ;;
-    14) region="sa-east-1" ;;
+    5) region="ca-central-1" ;;
+    6) region="eu-central-1" ;;
+    7) region="eu-west-1" ;;
+    8) region="eu-west-2" ;;
+    9) region="eu-west-3" ;;
+    10) region="ap-northeast-1" ;;
+    11) region="ap-northeast-2" ;;
+    12) region="ap-northeast-3";;
+    13) region="ap-southeast-1" ;;
+    14) region="ap-southeast-2" ;;
+    15) region="ap-south-1" ;;
+    16) region="sa-east-1"  ;;
   esac
 
   ROLES="ec2 vpn cloud"
-  EXTRA_VARS="aws_access_key=$aws_access_key aws_secret_key=$aws_secret_key aws_server_name=$aws_server_name ssh_public_key=$ssh_public_key region=$region"
+  EXTRA_VARS="aws_access_key=$aws_access_key aws_secret_key=$aws_secret_key aws_server_name=$aws_server_name region=$region"
 }
 
 lightsail () {
@@ -318,6 +335,7 @@ Name the vpn server:
     10.  eu-central-1        EU (Frankfurt)
     11.  eu-west-1           EU (Ireland)
     12.  eu-west-2           EU (London)
+
 Enter the number of your desired region:
 [1]: " -r algo_region
 algo_region=${algo_region:-1}
@@ -379,7 +397,7 @@ algo_region=${algo_region:-1}
 
 openstack () {
 read -p "
-Enter the local path to your credentials OpenStack RC file (Can be donloaded from the OpenStack dashboard->Compute->API Access)
+Enter the local path to your credentials OpenStack RC file (Can be downloaded from the OpenStack dashboard->Compute->API Access)
 [...]: " -r os_rc
 
 read -p "
@@ -407,83 +425,110 @@ Name the vpn server:
   read -p "
 
   What zone should the server be located in?
-    1. Western US       (Oregon A)
-    2. Western US       (Oregon B)
-    3. Western US       (Oregon C)
-    4. Central US       (Iowa A)
-    5. Central US       (Iowa B)
-    6. Central US       (Iowa C)
-    7. Central US       (Iowa F)
-    8. Eastern US       (Northern Virginia A)
-    9. Eastern US       (Northern Virginia B)
-    10. Eastern US      (Northern Virginia C)
-    11. Eastern US      (South Carolina B)
-    12. Eastern US      (South Carolina C)
-    13. Eastern US      (South Carolina D)
-    14. Western Europe  (Belgium B)
-    15. Western Europe  (Belgium C)
-    16. Western Europe  (Belgium D)
-    17. Western Europe  (London A)
-    18. Western Europe  (London B)
-    19. Western Europe  (London C)
-    20. Western Europe  (Frankfurt A)
-    21. Western Europe  (Frankfurt B)
-    22. Western Europe  (Frankfurt C)
-    23. Southeast Asia  (Singapore A)
-    24. Southeast Asia  (Singapore B)
-    25. East Asia       (Taiwan A)
-    26. East Asia       (Taiwan B)
-    27. East Asia       (Taiwan C)
-    28. Northeast Asia  (Tokyo A)
-    29. Northeast Asia  (Tokyo B)
-    30. Northeast Asia  (Tokyo C)
-    31. Australia	(Sydney A)
-    32. Australia	(Sydney B)
-    33. Australia	(Sydney C)
-    34. South America   (São Paulo A)
-    35. South America   (São Paulo B)
-    36. South America   (São Paulo C)
-Please choose the number of your zone. Press enter for default (#14) zone.
-[14]: " -r region
-  region=${region:-14}
+    1. Eastern Canada          (Montreal A)
+    2. Eastern Canada          (Montreal B)
+    3. Eastern Canada          (Montreal C)
+    4. Central US              (Iowa A)
+    5. Central US              (Iowa B)
+    6. Central US              (Iowa C)
+    7. Central US              (Iowa F)
+    8. Western US              (Oregon A)
+    9. Western US              (Oregon B)
+    10. Western US             (Oregon C)
+    11. Eastern US             (Northern Virginia A)
+    12. Eastern US             (Northern Virginia B)
+    13. Eastern US             (Northern Virginia C)
+    14. Eastern US             (South Carolina B)
+    15. Eastern US             (South Carolina C)
+    16. Eastern US             (South Carolina D)
+    17. South America East     (São Paulo A)
+    18. South America East     (São Paulo B)
+    19. South America East     (São Paulo C)
+    20. Northern Europe        (Hamina A)
+    21. Northern Europe        (Hamina B)
+    22. Northern Europe        (Hamina C)
+    23. Western Europe         (Belgium B)
+    24. Western Europe         (Belgium C)
+    25. Western Europe         (Belgium D)
+    26. Western Europe         (London A)
+    27. Western Europe         (London B)
+    28. Western Europe         (London C)
+    29. Western Europe         (Frankfurt A)
+    30. Western Europe         (Frankfurt B)
+    31. Western Europe         (Frankfurt C)
+    32. Western Europe         (Netherlands A)
+    33. Western Europe         (Netherlands B)
+    34. Western Europe         (Netherlands C)
+    35. South Asia             (Mumbai A)
+    36. South Asia             (Mumbai B)
+    37. South Asia             (Mumbai C)
+    38. Southeast Asia         (Singapore A)
+    39. Southeast Asia         (Singapore B)
+    40. Southeast Asia         (Singapore C)
+    41. East Asia              (Taiwan A)
+    42. East Asia              (Taiwan B)
+    43. East Asia              (Taiwan C)
+    44. Northeast Asia         (Tokyo A)
+    45. Northeast Asia         (Tokyo B)
+    46. Northeast Asia         (Tokyo C)
+    47. Australia              (Sydney A)
+    48. Australia              (Sydney B)
+    49. Australia              (Sydney C)
+
+Please choose the number of your zone. Press enter for default (#20) zone.
+[20]: " -r region
+  region=${region:-20}
 
   case "$region" in
-    1) zone="us-west1-a" ;;
-    2) zone="us-west1-b" ;;
-    3) zone="us-west1-c" ;;
-    4) zone="us-central1-a" ;;
-    5) zone="us-central1-b" ;;
-    6) zone="us-central1-c" ;;
-    7) zone="us-central1-f" ;;
-    8) zone="us-east4-a" ;;
-    9) zone="us-east4-b" ;;
-    10) zone="us-east4-c" ;;
-    11) zone="us-east1-b" ;;
-    12) zone="us-east1-c" ;;
-    13) zone="us-east1-d" ;;
-    14) zone="europe-west1-b" ;;
-    15) zone="europe-west1-c" ;;
-    16) zone="europe-west1-d" ;;
-    17) zone="europe-west2-a" ;;
-    18) zone="europe-west2-b" ;;
-    19) zone="europe-west2-c" ;;
-    20) zone="europe-west3-a" ;;
-    21) zone="europe-west3-b" ;;
-    22) zone="europe-west3-c" ;;
-    23) zone="asia-southeast1-a" ;;
-    24) zone="asia-southeast1-b" ;;
-    25) zone="asia-east1-a" ;;
-    26) zone="asia-east1-b" ;;
-    27) zone="asia-east1-c" ;;
-    28) zone="asia-northeast1-a" ;;
-    29) zone="asia-northeast1-b" ;;
-    30) zone="asia-northeast1-c" ;;
-    31) zone="australia-southeast1-a" ;;
-    32) zone="australia-southeast1-b" ;;
-    33) zone="australia-southeast1-c" ;;
-    34) zone="southamerica-east1-a" ;;
-    35) zone="southamerica-east1-b" ;;
-    36) zone="southamerica-east1-c" ;;
+    1)  zone="northamerica-northeast1-a" ;;
+    2)  zone="northamerica-northeast1-b" ;;
+    3)  zone="northamerica-northeast1-c" ;;
+    4)  zone="us-central1-a" ;;
+    5)  zone="us-central1-b" ;;
+    6)  zone="us-central1-c" ;;
+    7)  zone="us-central1-f" ;;
+    8)  zone="us-west1-a" ;;
+    9)  zone="us-west1-b" ;;
+    10) zone="us-west1-c" ;;
+    11) zone="us-east4-a" ;;
+    12) zone="us-east4-b" ;;
+    13) zone="us-east4-c" ;;
+    14) zone="us-east1-b" ;;
+    15) zone="us-east1-c" ;;
+    16) zone="us-east1-d" ;;
+    17) zone="southamerica-east1-a" ;;
+    18) zone="southamerica-east1-b" ;;
+    19) zone="southamerica-east1-c" ;;
+    20) zone="europe-north1-a" ;;
+    21) zone="europe-north1-b" ;;
+    22) zone="europe-north1-c" ;;
+    23) zone="europe-west1-b" ;;
+    24) zone="europe-west1-c" ;;
+    25) zone="europe-west1-d" ;;
+    26) zone="europe-west2-a" ;;
+    27) zone="europe-west2-b" ;;
+    28) zone="europe-west2-c" ;;
+    29) zone="europe-west3-a" ;;
+    30) zone="europe-west3-b" ;;
+    31) zone="europe-west3-c" ;;
+    32) zone="europe-west4-a" ;;
+    33) zone="europe-west4-b" ;;
+    34) zone="europe-west4-c" ;;
+    35) zone="asia-south1-a" ;;
+    36) zone="asia-south1-b" ;;
+    37) zone="asia-south1-c" ;;
+    38) zone="asia-southeast1-a" ;;
+    39) zone="asia-southeast1-b" ;;
+    40) zone="asia-southeast1-c" ;;
+    41) zone="asia-east1-a" ;;
+    42) zone="asia-east1-b" ;;
+    43) zone="asia-east1-c" ;;
+    44) zone="asia-northeast1-a" ;;
+    45) zone="asia-northeast1-b" ;;
+    46) zone="asia-northeast1-c" ;;
+    47) zone="australia-southeast1-a" ;;
+    48) zone="australia-southeast1-b" ;;
+    49) zone="australia-southeast1-c" ;;
   esac
 
   ROLES="gce vpn cloud"
@@ -536,13 +581,12 @@ algo_provisioning () {
   echo -n "
   What provider would you like to use?
     1. DigitalOcean
-    2. Amazon Lightsail
-    3. Amazon EC2
-    4. Microsoft Azure
-    5. Google Compute Engine
-    6. Scaleway
-    7. OpenStack (DreamCompute optimised)
-    8. Install to existing Ubuntu 16.04 server
+    2. Amazon EC2
+    3. Microsoft Azure
+    4. Google Compute Engine
+    5. Scaleway
+    6. OpenStack (DreamCompute optimised)
+    7. Install to existing Ubuntu 16.04 server (Advanced)
 
 Enter the number of your desired provider
 : "
@@ -551,13 +595,12 @@ Enter the number of your desired provider
 
   case "$N" in
     1) digitalocean; ;;
-    2) lightsail; ;;
-    3) ec2; ;;
-    4) azure; ;;
-    5) gce; ;;
-    6) scaleway; ;;
-    7) openstack; ;;
-    8) non_cloud; ;;
+    2) ec2; ;;
+    3) azure; ;;
+    4) gce; ;;
+    5) scaleway; ;;
+    6) openstack; ;;
+    7) non_cloud; ;;
     *) exit 1 ;;
   esac
 

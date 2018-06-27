@@ -63,7 +63,7 @@ checking for gcc... gcc
 checking whether the C compiler works... no
 configure: error: in '/private/var/folders/3f/q33hl6_x6_nfyjg29fcl9qdr0000gp/T/pip-build-DB5VZp/pycrypto': configure: error: C compiler cannot create executables See config.log for more details
 Traceback (most recent call last):
-File "", line 1, in 
+File "", line 1, in
 ...
 cmd_obj.run()
 File "/private/var/folders/3f/q33hl6_x6_nfyjg29fcl9qdr0000gp/T/pip-build-DB5VZp/pycrypto/setup.py", line 278, in run
@@ -75,7 +75,7 @@ You don't have a working compiler installed. You should install the XCode compil
 
 ### Error: "fatal error: 'openssl/opensslv.h' file not found"
 
-On macOS, you tried to install pycrypto and encountered the following error:
+On macOS, you tried to install `cryptography` and encountered the following error:
 
 ```
 build/temp.macosx-10.12-intel-2.7/_openssl.c:434:10: fatal error: 'openssl/opensslv.h' file not found
@@ -94,7 +94,7 @@ Command /usr/bin/python -c "import setuptools, tokenize;__file__='/private/tmp/p
 Storing debug log for failure in /Users/algore/Library/Logs/pip.log
 ```
 
-You are running an old version of `pip` that cannot build the `pycrypto` dependency. Upgrade to a new version of `pip` by running `sudo pip install -U pip`. 
+You are running an old version of `pip` that cannot download the binary `cryptography` dependency. Upgrade to a new version of `pip` by running `sudo pip install -U pip`.
 
 ### Error: "TypeError: must be str, not bytes"
 
@@ -160,7 +160,7 @@ fatal: [localhost]: FAILED! => {"changed": true, "events": ["StackEvent AWS::Clo
 
 Algo builds a [Cloudformation](https://aws.amazon.com/cloudformation/) template to deploy to AWS. You can find the entire contents of the Cloudformation template in `configs/algo.yml`. In order to troubleshoot this issue, login to the AWS console, go to the Cloudformation service, find the failed deployment, click the events tab, and find the corresponding "CREATE_FAILED" events. Note that all AWS resources created by Algo are tagged with `Environment => Algo` for easy identification.
 
-In many cases, failed deployments are the result of [service limits](http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) being reached, such as "CREATE_FAILED	AWS::EC2::VPC	VPC	The maximum number of VPCs has been reached." In these cases, you must [contact AWS support](https://console.aws.amazon.com/support/home?region=us-east-1#/case/create?issueType=service-limit-increase&limitType=service-code-direct-connect) to increase the limits on your account.
+In many cases, failed deployments are the result of [service limits](http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) being reached, such as "CREATE_FAILED	AWS::EC2::VPC	VPC	The maximum number of VPCs has been reached." In these cases, you must either [delete the VPCs from previous deployments](https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/working-with-vpcs.html#VPC_Deleting), or [contact AWS support](https://console.aws.amazon.com/support/home?region=us-east-1#/case/create?issueType=service-limit-increase&limitType=service-code-direct-connect) to increase the limits on your account.
 
 ## Connection Problems
 
@@ -198,7 +198,7 @@ You're trying to connect Ubuntu or Debian to the Algo server through the Network
 
 This issue appears intermittently due to issues with MTU size. If you experience this issue, we recommend [filing an issue](https://github.com/trailofbits/algo/issues/new) for assistance. Advanced users can troubleshoot the correct MTU size by retrying `ping` with the "don't fragment" bit set, then decreasing packet size until it works. This will determine the correct MTU size for your network, which you then need to update on your network adapter.
 
-E.g., On Linux (client -- Ubuntu 16.04), connect to your IPsec tunnel then use the following commands to determine the correct MTU size:
+E.g., On Linux (client -- Ubuntu 18.04), connect to your IPsec tunnel then use the following commands to determine the correct MTU size:
 ```
 $ ping -M do -s 1500 www.google.com
 PING www.google.com (74.125.22.147) 1500(1528) bytes of data.
@@ -214,6 +214,32 @@ $ sudo ifconfig wlan0 mtu 1438
 On Windows, this issue may manifest with an error message that says "The network connection between your computer and the VPN server could not be established because the remote server is not responding... This is Error 809." On other operating systems, you may try to debug the issue by capturing packets with tcpdump and notice that, while IKE_SA_INIT request and responses are exchanged between the client and server, IKE_AUTH requests never make it to the server.
 
 It is possible that the IKE_AUTH payload is too big to fit in a single IP datagram, and so is fragmented. Many consumer routers and cable modems ship with a feature that blocks "fragmented IP packets." Try logging into your router and disabling any firewall settings related to blocking or dropping fragmented IP packets. For more information, see [Issue #305](https://github.com/trailofbits/algo/issues/305).
+
+### Error: name 'basestring' is not defined
+
+```
+TASK [cloud-digitalocean : Creating a droplet...] *******************************************
+An exception occurred during task execution. To see the full traceback, use -vvv. The error was: NameError: name 'basestring' is not defined
+fatal: [localhost]: FAILED! => {"changed": false, "msg": "name 'basestring' is not defined"}
+```
+
+If you get something like the above it's likely you're not using a python2 virtualenv.
+
+Ensure running `python2.7` drops you into a python 2 shell (it looks something like this)
+
+```
+user@homebook ~ $ python2.7
+Python 2.7.10 (default, Feb  7 2017, 00:08:15)
+[GCC 4.2.1 Compatible Apple LLVM 8.0.0 (clang-800.0.34)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>>
+```
+
+Then rerun the dependency installation explicitly using python 2.7
+
+```
+python2.7 -m virtualenv --python=`which python2.7` env && source env/bin/activate && python2.7 -m pip install -U pip && python2.7 -m pip install -r requirements.txt
+```
 
 ## I have a problem not covered here
 

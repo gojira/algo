@@ -87,7 +87,6 @@ Required variables:
 - aws_access_key
 - aws_secret_key
 - aws_server_name
-- ssh_public_key
 - region
 
 Possible options for `region`:
@@ -199,6 +198,9 @@ Possible options for `zone`:
 - us-east1-b
 - us-east1-c
 - us-east1-d
+- europe-north1-a
+- europe-north1-b
+- europe-north1-c
 - europe-west1-b
 - europe-west1-c
 - europe-west1-d
