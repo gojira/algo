@@ -1,3 +1,17 @@
+## 7 Sep 2018
+### Changed
+- Azure: Deployment via Azure Resource Manager
+
+## 27 Aug 2018
+### Changed
+- Large refactor to support Ansible 2.5. [Details](https://github.com/trailofbits/algo/pull/976)
+- Add a new cloud provider - Vultr
+
+### Upgrade notes
+- If any problems encountered follow the [instructions](https://github.com/trailofbits/algo#deploy-the-algo-server) from scratch
+- You can't update users on your old servers with the new code. Use the old code before this release or rebuild the server from scratch
+- Update AWS IAM permissions for your user as per [issue](https://github.com/trailofbits/algo/issues/1079#issuecomment-416577599)
+
 ## 04 Jun 2018
 ### Changed
 - Switched to [new cipher suite](https://github.com/trailofbits/algo/issues/981)
